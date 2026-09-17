@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>kill them all....</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        :root {
+            --bg-color: #0b0c10;
+            --panel-bg: rgba(20, 22, 26, 0.92);
+            --accent-gray: #8a8f99;
+            --light-gray: #d1d5db;
+            --dark-gray: #1f232a;
+            --border-gray: #3a3f4d;
+            --glow-gray: rgba(160, 170, 190, 0.3);
+            --blood-dark: rgba(30, 0, 5, 0.95);
+        }
+
+        body {
+            height: 100vh;
+            background: var(--bg-color);
+            font-family: 'Consolas', 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--light-gray);
+        }
+
+        /* Сканирующие линии и мониторная сетка */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 20, 24, 0) 50%, rgba(0, 0, 0, 0.7) 50%), 
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.02));
+            background-size: 100% 3px, 4px 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.95);
+            z-index: 9;
+            pointer-events: none;
+        }
+
+        #canvas, #blood-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        #canvas { z-index: 1; }
+        #blood-canvas { z-index: 7; pointer-events: none; }
+
+        /* Главный интерфейс в серых тонах */
+        .interface {
+            position: relative;
+            z-index: 8;
+            width: 88%;
+            max-width: 1000px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-gray);
+            padding: 40px;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.02);
+            border-radius: 2px;
+            transition: transform 0.05s ease-out;
+        }
+
+        /* Угловые рамки */
+        .interface::before, .interface::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--accent-gray);
+        }
+        .interface::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; box-shadow: -2px -2px 8px var(--glow-gray); }
+        .interface::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; box-shadow: 2px 2px 8px var(--glow-gray); }
+
+        .shake {
+            animation: screenShake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes screenShake {
+            10%, 90% { transform: translate3d(-2px, 1px, 0); }
+            20%, 80% { transform: translate3d(4px, -2px, 0); }
+            30%, 50%, 70% { transform: translate3d(-5px, 3px, 0); }
+            40%, 60% { transform: translate3d(5px, -3px, 0); }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-gray);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 2px;
+            border: 1px solid var(--accent-gray);
+            background: var(--dark-gray);
+            filter: grayscale(80%);
+        }
+
+        .user-text {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #6b7280;
+        }
+
+        .username {
+            color: var(--light-gray);
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 0 0 6px var(--glow-gray);
+        }
+
+        .system-stats {
+            font-size: 10px;
+            color: #6b7280;
+            text-align: right;
+            letter-spacing: 1px;
+            line-height: 1.5;
+        }
+
+        .system-stats span {
+            color: var(--accent-gray);
+        }
+
+        .title-box {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .glitch-title {
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            color: #e5e7eb;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .subtitle {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: var(--accent-gray);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Визуализатор аудио в серых тонах */
+        .visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 5px;
+            height: 35px;
+            margin-bottom: 20px;
+        }
+
+        .bar {
+            width: 5px;
+            background: var(--accent-gray);
+            box-shadow: 0 0 6px var(--glow-gray);
+            transition: height 0.05s ease;
+        }
+
+        /* Консольный терминал логов */
+        .terminal {
+            background: rgba(10, 11, 14, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            height: 75px;
+            overflow: hidden;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .terminal-line {
+            margin-top: 3px;
+            white-space: nowrap;
+        }
+
+        .terminal-line::before {
+            content: "> ";
+            color: var(--accent-gray);
+        }
+
+        /* Прогресс-бар */
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .progress-box {
+            width: 100%;
+            background: #0d0e12;
+            border: 1px solid var(--border-gray);
+            padding: 3px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            width: 0%;
+            background: linear-gradient(90deg, #4b5563, #9ca3af, #e5e7eb);
+            transition: width 0.2s ease;
+            box-shadow: 0 0 10px var(--glow-gray);
+        }
+
+        .track-info {
+            text-align: center;
+            font-size: 10px;
+            color: #6b7280;
+            letter-spacing: 2px;
+        }
+
+        .track-info span {
+            color: var(--light-gray);
+        }
+
+        .audio-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 10px;
+            color: #4b5563;
+            cursor: pointer;
+            z-index: 12;
+        }
+
+        .btn:hover { color: var(--light-gray); }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" src="music.mp3" loop></audio>
+    <audio id="gunshot" src="shot.mp3" preload="auto"></audio>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <canvas id="canvas"></canvas>
+    <canvas id="blood-canvas"></canvas>
+
+    <div class="interface" id="main-ui">
+        <div class="header">
+            <div class="user-info">
+                <img id="avatar" class="avatar" src="https://i.imgur.com/839598X.png" alt="Steam Avatar">
+                <div class="user-text">
+                    ПОЛЬЗОВАТЕЛЬ<br>
+                    <span id="username" class="username">GOREMAN</span>
+                </div>
+            </div>
+            <div class="system-stats">
+                СИСТЕМА: <span>HOMICIDE / WIRED</span><br>
+                ПИНГ: <span id="ping">24 ms</span> | FPS: <span id="fps">60</span>
+            </div>
+        </div>
+
+        <div class="title-box">
+            <div class="glitch-title">XIROCITY</div>
+            <div class="subtitle">INTO THE WIRED // GRAY EDITION</div>
+        </div>
+
+        <div class="visualizer" id="visualizer"></div>
+
+        <!-- Добавленный консольный терминал -->
+        <div class="terminal" id="terminal">
+            <div class="terminal-line">Инициализация системного ядра...</div>
+            <div class="terminal-line">Подключение к сети WIRED установлено.</div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <span id="status">ЗАГРУЗКА РЕСУРСОВ...</span>
+                <span id="percent">0%</span>
+            </div>
+            <div class="progress-box">
+                <div class="progress-bar" id="bar"></div>
+            </div>
+        </div>
+
+        <div class="track-info">
+            ТРЕК: <span>emotionalpastel - ode 2 1em0xx (into the wired)</span>
+        </div>
+    </div>
+
+    <div class="audio-controls">
+        <span class="btn" onclick="toggleMusic()">[MUTE / UNMUTE]</span>
+    </div>
+
+    <script>
+        // --- ВИЗУАЛИЗАТОР ЗВУКА ---
+        const vizContainer = document.getElementById('visualizer');
+        const barCount = 28;
+        const bars = [];
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = '4px';
+            vizContainer.appendChild(bar);
+            bars.push(bar);
+        }
+
+        // --- ФОНОВЫЕ СЕРЫЕ ЧАСТИЦЫ ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        for (let i = 0; i < 80; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                speedY: Math.random() * 0.4 + 0.1,
+                speedX: Math.random() * 0.2 - 0.1,
+                opacity: Math.random() * 0.4 + 0.1
+            });
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                ctx.fillStyle = `rgba(160, 170, 185, ${p.opacity})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.y += p.speedY;
+                p.x += p.speedX;
+
+                if (p.y > canvas.height) p.y = 0;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.x < 0) p.x = canvas.width;
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        // --- ЭФФЕКТ СТЕКАЮЩЕЙ КРОВИ ---
+        const bloodCanvas = document.getElementById('blood-canvas');
+        const bCtx = bloodCanvas.getContext('2d');
+        bloodCanvas.width = window.innerWidth;
+        bloodCanvas.height = window.innerHeight;
+
+        let bloodDrips = [];
+
+        function triggerBloodSplatter() {
+            const gunshot = document.getElementById('gunshot');
+            gunshot.currentTime = 0;
+            gunshot.volume = 0.5;
+            gunshot.play().catch(() => {});
+
+            const ui = document.getElementById('main-ui');
+            ui.classList.add('shake');
+            setTimeout(() => ui.classList.remove('shake'), 300);
+
+            let centerX = Math.random() * (bloodCanvas.width * 0.8) + (bloodCanvas.width * 0.1);
+            let centerY = Math.random() * (bloodCanvas.height * 0.4) + (bloodCanvas.height * 0.1);
+
+            for (let i = 0; i < 4; i++) {
+                let offX = (Math.random() - 0.5) * 30;
+                let offY = (Math.random() - 0.5) * 30;
+                let rad = Math.random() * 20 + 10;
+
+                let grad = bCtx.createRadialGradient(centerX + offX, centerY + offY, 1, centerX + offX, centerY + offY, rad);
+                grad.addColorStop(0, 'rgba(35, 0, 5, 0.95)');
+                grad.addColorStop(1, 'rgba(10, 0, 0, 0)');
+
+                bCtx.fillStyle = grad;
+                bCtx.beginPath();
+                bCtx.arc(centerX + offX, centerY + offY, rad, 0, Math.PI * 2);
+                bCtx.fill();
+            }
+
+            let dripCount = Math.floor(Math.random() * 3) + 2;
+            for (let i = 0; i < dripCount; i++) {
+                bloodDrips.push({
+                    x: centerX + (Math.random() - 0.5) * 30,
+                    y: centerY,
+                    maxLength: Math.random() * 250 + 80,
+                    currentLength: 0,
+                    speed: Math.random() * 1.5 + 0.5,
+                    width: Math.random() * 3 + 1.5,
+                    opacity: 0.95
+                });
+            }
+            
+            addTerminalLog("ОБНАРУЖЕНА КРИТИЧЕСКАЯ ОШИБКА: Потеря пакетов данных.");
+        }
+
+        function drawBloodDrips() {
+            bloodDrips.forEach((d, index) => {
+                if (d.currentLength < d.maxLength) {
+                    d.currentLength += d.speed;
+                    bCtx.fillStyle = `rgba(30, 0, 5, ${d.opacity})`;
+                    bCtx.beginPath();
+                    bCtx.arc(d.x, d.y + d.currentLength, d.width, 0, Math.PI * 2);
+                    bCtx.fill();
+                } else {
+                    d.opacity -= 0.001;
+                }
+                if (d.opacity <= 0) bloodDrips.splice(index, 1);
+            });
+            requestAnimationFrame(drawBloodDrips);
+        }
+        drawBloodDrips();
+
+        setInterval(() => {
+            if(Math.random() > 0.4) triggerBloodSplatter();
+        }, 7000);
+
+        // --- ЛОГИ ТЕРМИНАЛА ---
+        const terminal = document.getElementById('terminal');
+        function addTerminalLog(text) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerText = text;
+            terminal.appendChild(line);
+            if (terminal.childNodes.length > 4) {
+                terminal.removeChild(terminal.firstChild);
+            }
+        }
+
+        // --- АУДИО КОНТЕКСТ ---
+        const music = document.getElementById('bg-music');
+        music.volume = 0.4;
+        let audioCtx, analyser, dataArray;
+
+        function initAudioContext() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaElementSource(music);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            analyser.fftSize = 64;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            renderVisualizer();
+        }
+
+        function renderVisualizer() {
+            requestAnimationFrame(renderVisualizer);
+            if (!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+
+            for (let i = 0; i < barCount; i++) {
+                const val = dataArray[i] || 0;
+                const h = Math.max(4, (val / 255) * 32);
+                bars[i].style.height = h + 'px';
+            }
+        }
+
+        function toggleMusic() {
+            initAudioContext();
+            if (music.paused) { music.play(); } else { music.pause(); }
+        }
+
+        document.addEventListener('click', () => {
+            initAudioContext();
+            if (music.paused) music.play().catch(() => {});
+        }, { once: true });
+
+        // --- API GARRY'S MOD ---
+        function GameDetails(servername, serverurl, mapname, maxplayers, steamid) {
+            addTerminalLog("Карта сервера: " + mapname);
+            if (steamid) document.getElementById('username').innerText = steamid;
+        }
+
+        function SetFilesNeeded(needed) { window.totalFiles = needed; }
+
+        function SetFilesRemaining(remaining) {
+            if (window.totalFiles && window.totalFiles > 0) {
+                let progress = Math.round(((window.totalFiles - remaining) / window.totalFiles) * 100);
+                document.getElementById('bar').style.width = progress + '%';
+                document.getElementById('percent').innerText = progress + '%';
+                addTerminalLog("Загрузка файлов: " + remaining + " осталось...");
+            }
+        }
+
+        function SetStatusChanged(status) {
+            document.getElementById('status').innerText = status.toUpperCase();
+            addTerminalLog("Статус: " + status);
+        }
+    </script>
+</body>
+</html>
