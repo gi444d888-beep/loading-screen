@@ -13,13 +13,14 @@
 
         :root {
             --bg-color: #0b0c10;
-            --panel-bg: rgba(20, 22, 26, 0.92);
-            --accent-gray: #8a8f99;
-            --light-gray: #d1d5db;
-            --dark-gray: #1f232a;
-            --border-gray: #3a3f4d;
-            --glow-gray: rgba(160, 170, 190, 0.3);
-            --blood-dark: rgba(30, 0, 5, 0.95);
+            --panel-bg: rgba(16, 18, 22, 0.94);
+            --accent-gray: #9ca3af;
+            --light-gray: #f3f4f6;
+            --dark-gray: #111827;
+            --border-gray: #374151;
+            --glow-gray: rgba(209, 213, 219, 0.25);
+            --glitch-red: rgba(255, 0, 50, 0.75);
+            --glitch-blue: rgba(0, 200, 255, 0.75);
         }
 
         body {
@@ -33,21 +34,53 @@
             color: var(--light-gray);
         }
 
-        /* Сканирующие линии и мониторная сетка */
+        /* КНОПКА ЗВУКА В ВЕРХНЕМ ПРАВОМ УГЛУ (Чтобы gmod не перекрывал) */
+        .audio-controls {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--light-gray);
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid var(--border-gray);
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 99999;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .audio-controls:hover {
+            border-color: #fff;
+            box-shadow: 0 0 15px var(--glow-gray);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        /* Эффект CRT монитора и сканирующих линий */
         .scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 20, 24, 0) 50%, rgba(0, 0, 0, 0.7) 50%), 
-                        linear-gradient(90deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.02));
-            background-size: 100% 3px, 4px 100%;
+            background: linear-gradient(rgba(18, 20, 24, 0) 50%, rgba(0, 0, 0, 0.65) 50%), 
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.03));
+            background-size: 100% 4px, 6px 100%;
             z-index: 10;
             pointer-events: none;
+            animation: scanlineFlicker 0.15s infinite alternate;
+        }
+
+        @keyframes scanlineFlicker {
+            0% { opacity: 0.95; }
+            100% { opacity: 1; }
         }
 
         .vignette {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.95);
+            box-shadow: inset 0 0 180px rgba(0, 0, 0, 0.95);
             z-index: 9;
             pointer-events: none;
         }
@@ -60,41 +93,52 @@
         #canvas { z-index: 1; }
         #blood-canvas { z-index: 7; pointer-events: none; }
 
-        /* Главный интерфейс в серых тонах */
+        /* Главный интерфейс */
         .interface {
             position: relative;
             z-index: 8;
             width: 88%;
-            max-width: 1000px;
+            max-width: 980px;
             background: var(--panel-bg);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(16px);
             border: 1px solid var(--border-gray);
             padding: 40px;
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.02);
-            border-radius: 2px;
-            transition: transform 0.05s ease-out;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.95), inset 0 0 30px rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            animation: interfaceEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Угловые рамки */
+        @keyframes interfaceEntrance {
+            0% { opacity: 0; transform: scale(0.92) translateY(20px); filter: blur(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        }
+
+        /* Угловые рамки с неоновой пульсацией */
         .interface::before, .interface::after {
             content: '';
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             border: 2px solid var(--accent-gray);
+            animation: borderPulse 3s infinite alternate;
         }
-        .interface::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; box-shadow: -2px -2px 8px var(--glow-gray); }
-        .interface::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; box-shadow: 2px 2px 8px var(--glow-gray); }
+        .interface::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+        .interface::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+        @keyframes borderPulse {
+            0% { border-color: var(--border-gray); box-shadow: 0 0 0px transparent; }
+            100% { border-color: var(--light-gray); box-shadow: 0 0 12px var(--glow-gray); }
+        }
 
         .shake {
-            animation: screenShake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+            animation: screenShake 0.25s cubic-bezier(.36,.07,.19,.97) both;
         }
 
         @keyframes screenShake {
-            10%, 90% { transform: translate3d(-2px, 1px, 0); }
-            20%, 80% { transform: translate3d(4px, -2px, 0); }
-            30%, 50%, 70% { transform: translate3d(-5px, 3px, 0); }
-            40%, 60% { transform: translate3d(5px, -3px, 0); }
+            10%, 90% { transform: translate3d(-3px, 2px, 0); }
+            20%, 80% { transform: translate3d(5px, -3px, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 4px, 0); }
+            40%, 60% { transform: translate3d(6px, -4px, 0); }
         }
 
         .header {
@@ -102,8 +146,8 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-gray);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            padding-bottom: 18px;
+            margin-bottom: 25px;
         }
 
         .user-info {
@@ -113,12 +157,18 @@
         }
 
         .avatar {
-            width: 46px;
-            height: 46px;
-            border-radius: 2px;
+            width: 48px;
+            height: 48px;
+            border-radius: 3px;
             border: 1px solid var(--accent-gray);
             background: var(--dark-gray);
             filter: grayscale(80%);
+            transition: transform 0.3s ease;
+        }
+
+        .avatar:hover {
+            transform: scale(1.08);
+            filter: grayscale(0%);
         }
 
         .user-text {
@@ -130,8 +180,8 @@
         .username {
             color: var(--light-gray);
             font-weight: bold;
-            font-size: 14px;
-            text-shadow: 0 0 6px var(--glow-gray);
+            font-size: 15px;
+            text-shadow: 0 0 8px var(--glow-gray);
         }
 
         .system-stats {
@@ -139,7 +189,7 @@
             color: #6b7280;
             text-align: right;
             letter-spacing: 1px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .system-stats span {
@@ -148,71 +198,127 @@
 
         .title-box {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            position: relative;
         }
 
+        /* КРУТОЙ ГЛИТЧ ЗАГОЛОВОК */
         .glitch-title {
-            font-size: 64px;
+            font-size: 72px;
             font-weight: 900;
-            letter-spacing: 12px;
+            letter-spacing: 14px;
             text-transform: uppercase;
-            color: #e5e7eb;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            animation: glitchText 3s infinite;
+        }
+
+        .glitch-title::before, .glitch-title::after {
+            content: "XIROCITY";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip: rect(0, 0, 0, 0);
+        }
+
+        .glitch-title::before {
+            left: -2px;
+            text-shadow: 2px 0 var(--glitch-red);
+            animation: glitchAnim1 2s infinite linear alternate-reverse;
+        }
+
+        .glitch-title::after {
+            left: 2px;
+            text-shadow: -2px 0 var(--glitch-blue);
+            animation: glitchAnim2 1.5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitchAnim1 {
+            0% { clip: rect(20px, 9999px, 40px, 0); }
+            20% { clip: rect(60px, 9999px, 80px, 0); }
+            40% { clip: rect(10px, 9999px, 30px, 0); }
+            60% { clip: rect(50px, 9999px, 70px, 0); }
+            80% { clip: rect(30px, 9999px, 50px, 0); }
+            100% { clip: rect(0px, 9999px, 20px, 0); }
+        }
+
+        @keyframes glitchAnim2 {
+            0% { clip: rect(50px, 9999px, 70px, 0); }
+            20% { clip: rect(10px, 9999px, 30px, 0); }
+            40% { clip: rect(60px, 9999px, 80px, 0); }
+            60% { clip: rect(20px, 9999px, 40px, 0); }
+            80% { clip: rect(40px, 9999px, 60px, 0); }
+            100% { clip: rect(30px, 9999px, 50px, 0); }
         }
 
         .subtitle {
-            font-size: 10px;
-            letter-spacing: 6px;
+            font-size: 11px;
+            letter-spacing: 8px;
             color: var(--accent-gray);
             text-transform: uppercase;
-            margin-top: 4px;
+            margin-top: 6px;
+            opacity: 0.8;
         }
 
-        /* Визуализатор аудио в серых тонах */
+        /* Визуализатор аудио */
         .visualizer {
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            gap: 5px;
-            height: 35px;
-            margin-bottom: 20px;
+            gap: 6px;
+            height: 45px;
+            margin-bottom: 25px;
         }
 
         .bar {
-            width: 5px;
-            background: var(--accent-gray);
-            box-shadow: 0 0 6px var(--glow-gray);
-            transition: height 0.05s ease;
+            width: 6px;
+            background: linear-gradient(180deg, #ffffff, var(--accent-gray));
+            box-shadow: 0 0 8px var(--glow-gray);
+            border-radius: 1px;
+            transition: height 0.04s ease;
         }
 
         /* Консольный терминал логов */
         .terminal {
-            background: rgba(10, 11, 14, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            height: 75px;
+            background: rgba(8, 9, 12, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            height: 85px;
             overflow: hidden;
             font-size: 11px;
             color: #9ca3af;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
+            border-radius: 2px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
         }
 
         .terminal-line {
-            margin-top: 3px;
+            margin-top: 4px;
             white-space: nowrap;
+            animation: lineFade 0.3s ease-out forwards;
+        }
+
+        @keyframes lineFade {
+            from { opacity: 0; transform: translateX(-5px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .terminal-line::before {
             content: "> ";
-            color: var(--accent-gray);
+            color: #e5e7eb;
+            font-weight: bold;
         }
 
         /* Прогресс-бар */
         .progress-container {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
 
         .progress-header {
@@ -220,23 +326,35 @@
             justify-content: space-between;
             font-size: 11px;
             color: #9ca3af;
-            margin-bottom: 6px;
-            letter-spacing: 1px;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
         }
 
         .progress-box {
             width: 100%;
-            background: #0d0e12;
+            background: #090a0d;
             border: 1px solid var(--border-gray);
-            padding: 3px;
+            padding: 4px;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
         }
 
         .progress-bar {
-            height: 8px;
+            height: 10px;
             width: 0%;
-            background: linear-gradient(90deg, #4b5563, #9ca3af, #e5e7eb);
-            transition: width 0.2s ease;
-            box-shadow: 0 0 10px var(--glow-gray);
+            background: linear-gradient(90deg, #374151, #9ca3af, #ffffff);
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px var(--glow-gray);
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; width: 10px;
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
         }
 
         .track-info {
@@ -248,25 +366,18 @@
 
         .track-info span {
             color: var(--light-gray);
+            font-weight: bold;
         }
-
-        .audio-controls {
-            position: absolute;
-            bottom: 15px;
-            right: 20px;
-            font-size: 10px;
-            color: #4b5563;
-            cursor: pointer;
-            z-index: 12;
-        }
-
-        .btn:hover { color: var(--light-gray); }
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" src="music.mp3" loop></audio>
+    <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
     <audio id="gunshot" src="shot.mp3" preload="auto"></audio>
+
+    <div class="audio-controls" id="mute-btn" onclick="toggleMusic()">
+        [ SOUND: ON ]
+    </div>
 
     <div class="scanlines"></div>
     <div class="vignette"></div>
@@ -295,7 +406,6 @@
 
         <div class="visualizer" id="visualizer"></div>
 
-        <!-- Добавленный консольный терминал -->
         <div class="terminal" id="terminal">
             <div class="terminal-line">Инициализация системного ядра...</div>
             <div class="terminal-line">Подключение к сети WIRED установлено.</div>
@@ -316,14 +426,62 @@
         </div>
     </div>
 
-    <div class="audio-controls">
-        <span class="btn" onclick="toggleMusic()">[MUTE / UNMUTE]</span>
-    </div>
-
     <script>
+        // --- АУДИО МЕНЕДЖЕР С АВТОЗАПУСКОМ ---
+        const music = document.getElementById('bg-music');
+        const muteBtn = document.getElementById('mute-btn');
+        music.volume = 0.45;
+
+        let audioCtx, analyser, dataArray;
+        let isMuted = false;
+
+        function startAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                const source = audioCtx.createMediaElementSource(music);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                analyser.fftSize = 64;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                renderVisualizer();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            music.play().then(() => {
+                muteBtn.innerText = "[ SOUND: ON ]";
+            }).catch(() => {
+                // Если браузер заблокировал автоплей, подхватится при первом взаимодействии
+            });
+        }
+
+        function toggleMusic() {
+            startAudio();
+            if (music.paused) {
+                music.play();
+                isMuted = false;
+                muteBtn.innerText = "[ SOUND: ON ]";
+            } else {
+                music.pause();
+                isMuted = true;
+                muteBtn.innerText = "[ SOUND: MUTED ]";
+            }
+        }
+
+        // Автозапуск музыки при загрузке и любых действиях
+        window.addEventListener('load', () => {
+            startAudio();
+            document.addEventListener('mousemove', startAudio, { once: true });
+            document.addEventListener('keydown', startAudio, { once: true });
+            document.addEventListener('click', startAudio, { once: true });
+        });
+
         // --- ВИЗУАЛИЗАТОР ЗВУКА ---
         const vizContainer = document.getElementById('visualizer');
-        const barCount = 28;
+        const barCount = 32;
         const bars = [];
         for (let i = 0; i < barCount; i++) {
             const bar = document.createElement('div');
@@ -333,6 +491,18 @@
             bars.push(bar);
         }
 
+        function renderVisualizer() {
+            requestAnimationFrame(renderVisualizer);
+            if (!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+
+            for (let i = 0; i < barCount; i++) {
+                const val = dataArray[i] || 0;
+                const h = Math.max(4, (val / 255) * 42);
+                bars[i].style.height = h + 'px';
+            }
+        }
+
         // --- ФОНОВЫЕ СЕРЫЕ ЧАСТИЦЫ ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -340,21 +510,21 @@
         canvas.height = window.innerHeight;
 
         let particles = [];
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 90; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 size: Math.random() * 2 + 0.5,
-                speedY: Math.random() * 0.4 + 0.1,
-                speedX: Math.random() * 0.2 - 0.1,
-                opacity: Math.random() * 0.4 + 0.1
+                speedY: Math.random() * 0.5 + 0.1,
+                speedX: Math.random() * 0.4 - 0.2,
+                opacity: Math.random() * 0.5 + 0.1
             });
         }
 
         function drawParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach(p => {
-                ctx.fillStyle = `rgba(160, 170, 185, ${p.opacity})`;
+                ctx.fillStyle = `rgba(180, 190, 205, ${p.opacity})`;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -381,23 +551,23 @@
         function triggerBloodSplatter() {
             const gunshot = document.getElementById('gunshot');
             gunshot.currentTime = 0;
-            gunshot.volume = 0.5;
+            gunshot.volume = 0.4;
             gunshot.play().catch(() => {});
 
             const ui = document.getElementById('main-ui');
             ui.classList.add('shake');
-            setTimeout(() => ui.classList.remove('shake'), 300);
+            setTimeout(() => ui.classList.remove('shake'), 250);
 
             let centerX = Math.random() * (bloodCanvas.width * 0.8) + (bloodCanvas.width * 0.1);
             let centerY = Math.random() * (bloodCanvas.height * 0.4) + (bloodCanvas.height * 0.1);
 
-            for (let i = 0; i < 4; i++) {
-                let offX = (Math.random() - 0.5) * 30;
-                let offY = (Math.random() - 0.5) * 30;
-                let rad = Math.random() * 20 + 10;
+            for (let i = 0; i < 5; i++) {
+                let offX = (Math.random() - 0.5) * 35;
+                let offY = (Math.random() - 0.5) * 35;
+                let rad = Math.random() * 22 + 8;
 
                 let grad = bCtx.createRadialGradient(centerX + offX, centerY + offY, 1, centerX + offX, centerY + offY, rad);
-                grad.addColorStop(0, 'rgba(35, 0, 5, 0.95)');
+                grad.addColorStop(0, 'rgba(40, 0, 5, 0.95)');
                 grad.addColorStop(1, 'rgba(10, 0, 0, 0)');
 
                 bCtx.fillStyle = grad;
@@ -409,29 +579,29 @@
             let dripCount = Math.floor(Math.random() * 3) + 2;
             for (let i = 0; i < dripCount; i++) {
                 bloodDrips.push({
-                    x: centerX + (Math.random() - 0.5) * 30,
+                    x: centerX + (Math.random() - 0.5) * 35,
                     y: centerY,
-                    maxLength: Math.random() * 250 + 80,
+                    maxLength: Math.random() * 260 + 90,
                     currentLength: 0,
-                    speed: Math.random() * 1.5 + 0.5,
-                    width: Math.random() * 3 + 1.5,
+                    speed: Math.random() * 1.8 + 0.6,
+                    width: Math.random() * 3 + 1.2,
                     opacity: 0.95
                 });
             }
             
-            addTerminalLog("ОБНАРУЖЕНА КРИТИЧЕСКАЯ ОШИБКА: Потеря пакетов данных.");
+            addTerminalLog("КРИТИЧЕСКОЕ СОБЫТИЕ: Потеря пакетов данных на узле.");
         }
 
         function drawBloodDrips() {
             bloodDrips.forEach((d, index) => {
                 if (d.currentLength < d.maxLength) {
                     d.currentLength += d.speed;
-                    bCtx.fillStyle = `rgba(30, 0, 5, ${d.opacity})`;
+                    bCtx.fillStyle = `rgba(35, 0, 5, ${d.opacity})`;
                     bCtx.beginPath();
                     bCtx.arc(d.x, d.y + d.currentLength, d.width, 0, Math.PI * 2);
                     bCtx.fill();
                 } else {
-                    d.opacity -= 0.001;
+                    d.opacity -= 0.0015;
                 }
                 if (d.opacity <= 0) bloodDrips.splice(index, 1);
             });
@@ -440,8 +610,8 @@
         drawBloodDrips();
 
         setInterval(() => {
-            if(Math.random() > 0.4) triggerBloodSplatter();
-        }, 7000);
+            if(Math.random() > 0.45) triggerBloodSplatter();
+        }, 6500);
 
         // --- ЛОГИ ТЕРМИНАЛА ---
         const terminal = document.getElementById('terminal');
@@ -455,47 +625,9 @@
             }
         }
 
-        // --- АУДИО КОНТЕКСТ ---
-        const music = document.getElementById('bg-music');
-        music.volume = 0.4;
-        let audioCtx, analyser, dataArray;
-
-        function initAudioContext() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            const source = audioCtx.createMediaElementSource(music);
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
-            analyser.fftSize = 64;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            renderVisualizer();
-        }
-
-        function renderVisualizer() {
-            requestAnimationFrame(renderVisualizer);
-            if (!analyser) return;
-            analyser.getByteFrequencyData(dataArray);
-
-            for (let i = 0; i < barCount; i++) {
-                const val = dataArray[i] || 0;
-                const h = Math.max(4, (val / 255) * 32);
-                bars[i].style.height = h + 'px';
-            }
-        }
-
-        function toggleMusic() {
-            initAudioContext();
-            if (music.paused) { music.play(); } else { music.pause(); }
-        }
-
-        document.addEventListener('click', () => {
-            initAudioContext();
-            if (music.paused) music.play().catch(() => {});
-        }, { once: true });
-
         // --- API GARRY'S MOD ---
         function GameDetails(servername, serverurl, mapname, maxplayers, steamid) {
+            startAudio();
             addTerminalLog("Карта сервера: " + mapname);
             if (steamid) document.getElementById('username').innerText = steamid;
         }
@@ -512,6 +644,7 @@
         }
 
         function SetStatusChanged(status) {
+            startAudio();
             document.getElementById('status').innerText = status.toUpperCase();
             addTerminalLog("Статус: " + status);
         }
