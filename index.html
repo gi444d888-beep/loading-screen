@@ -35,7 +35,7 @@
             perspective: 1000px;
         }
 
-        /* КНОПКА ЗВУКА В ВЕРХНЕМ ЛЕВОМ УГЛУ */
+        /* КНОПКА ЗВУКА */
         .audio-controls {
             position: fixed !important;
             top: 20px !important;
@@ -61,7 +61,6 @@
             box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
         }
 
-        /* Сканирующие линии и мониторная сетка */
         .scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -86,25 +85,23 @@
             pointer-events: none;
         }
 
-        /* ПОЛОСЫ РАЗРЫВА КАДРА (GLITCH STRIPS) */
         .glitch-bar {
             position: absolute;
             width: 100%;
             height: 3px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             z-index: 11;
             pointer-events: none;
             opacity: 0;
         }
 
-        #matrix-canvas, #canvas, #blood-canvas {
+        #matrix-canvas, #nodes-canvas {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
         }
 
-        #matrix-canvas { z-index: 1; opacity: 0.25; }
-        #canvas { z-index: 2; }
-        #blood-canvas { z-index: 7; pointer-events: none; }
+        #matrix-canvas { z-index: 1; opacity: 0.2; }
+        #nodes-canvas { z-index: 2; }
 
         /* Главный интерфейс */
         .interface {
@@ -119,6 +116,7 @@
             box-shadow: 0 0 120px rgba(0, 0, 0, 0.98), inset 0 0 50px rgba(255, 255, 255, 0.02);
             border-radius: 3px;
             transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
             animation: interfaceEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -127,7 +125,6 @@
             100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0); }
         }
 
-        /* Анимированные неоновые углы */
         .interface::before, .interface::after {
             content: '';
             position: absolute;
@@ -138,17 +135,6 @@
         }
         .interface::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
         .interface::after { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
-
-        .shake {
-            animation: screenShake 0.25s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes screenShake {
-            10%, 90% { transform: translate3d(-6px, 4px, 0) rotate(-0.5deg); }
-            20%, 80% { transform: translate3d(8px, -6px, 0) rotate(0.5deg); }
-            30%, 50%, 70% { transform: translate3d(-10px, 7px, 0) rotate(-1deg); }
-            40%, 60% { transform: translate3d(10px, -7px, 0) rotate(1deg); }
-        }
 
         .header {
             display: flex;
@@ -213,7 +199,6 @@
             position: relative;
         }
 
-        /* ⚡ 3D RGB GLITCH TITLE PARANOIASIM ⚡ */
         .glitch-title {
             font-size: 74px;
             font-weight: 900;
@@ -281,13 +266,13 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
-        /* Визуализатор звука */
+        /* ДВУХСТОРОННИЙ ВИЗУАЛИЗАТОР */
         .visualizer {
             display: flex;
             justify-content: center;
-            align-items: flex-end;
+            align-items: center;
             gap: 5px;
-            height: 55px;
+            height: 60px;
             margin-bottom: 25px;
         }
 
@@ -299,7 +284,6 @@
             transition: height 0.03s cubic-bezier(0, 0, 0.2, 1);
         }
 
-        /* Терминал логов */
         .terminal {
             background: rgba(5, 6, 8, 0.96);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -333,7 +317,6 @@
             font-weight: bold;
         }
 
-        /* Прогресс-бар */
         .progress-container {
             margin-bottom: 20px;
         }
@@ -386,10 +369,9 @@
         }
     </style>
 </head>
-<body onclick="forceStartAudio()" onmousemove="forceStartAudio()" onkeydown="forceStartAudio()">
+<body onclick="forceStartAudio()" onmousemove="handleMouseMove(event)" onkeydown="forceStartAudio()">
 
     <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
-    <audio id="gunshot" src="shot.mp3" preload="auto"></audio>
 
     <button class="audio-controls" id="mute-btn" onclick="toggleMusic(event)">
         🔊 [ МУЗЫКА: ВКЛ ]
@@ -400,8 +382,7 @@
     <div class="glitch-bar" id="glitch-bar"></div>
 
     <canvas id="matrix-canvas"></canvas>
-    <canvas id="canvas"></canvas>
-    <canvas id="blood-canvas"></canvas>
+    <canvas id="nodes-canvas"></canvas>
 
     <div class="interface" id="main-ui">
         <div class="header">
@@ -427,7 +408,7 @@
 
         <div class="terminal" id="terminal">
             <div class="terminal-line">Инициализация Paranoiasim Engine v2.0...</div>
-            <div class="terminal-line">Подключение к сети WIRED прошло успешно.</div>
+            <div class="terminal-line">Синхронизация кибернетической сети прошла успешно.</div>
         </div>
 
         <div class="progress-container">
@@ -489,7 +470,23 @@
             }
         }
 
-        // --- НОВОЕ: ЦИФРОВОЙ ДОЖДЬ (MATRIX / WIRED RAIN) ---
+        // --- ИНТЕРАКТИВНЫЙ 3D-ПАРАЛЛАКС ИНТЕРФЕЙСА ---
+        const uiPanel = document.getElementById('main-ui');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        function handleMouseMove(e) {
+            forceStartAudio();
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            const rotX = (window.innerHeight / 2 - mouseY) / 45;
+            const rotY = (mouseX - window.innerWidth / 2) / 45;
+
+            uiPanel.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        }
+
+        // --- ЦИФРОВОЙ ДОЖДЬ (MATRIX / WIRED RAIN) ---
         const mCanvas = document.getElementById('matrix-canvas');
         const mCtx = mCanvas.getContext('2d');
         mCanvas.width = window.innerWidth;
@@ -519,9 +516,71 @@
         }
         drawMatrix();
 
+        // --- НОВОЕ: ИНТЕРАКТИВНАЯ СЕТЬ КИБЕР-УЗЛОВ (NODE CYBER-GRID) ---
+        const nCanvas = document.getElementById('nodes-canvas');
+        const nCtx = nCanvas.getContext('2d');
+        nCanvas.width = window.innerWidth;
+        nCanvas.height = window.innerHeight;
+
+        let nodes = [];
+        for (let i = 0; i < 75; i++) {
+            nodes.push({
+                x: Math.random() * nCanvas.width,
+                y: Math.random() * nCanvas.height,
+                vx: (Math.random() - 0.5) * 1.2,
+                vy: (Math.random() - 0.5) * 1.2,
+                radius: Math.random() * 2 + 1
+            });
+        }
+
+        function drawNodes() {
+            nCtx.clearRect(0, 0, nCanvas.width, nCanvas.height);
+
+            nodes.forEach((node, i) => {
+                node.x += node.vx;
+                node.y += node.vy;
+
+                if (node.x < 0 || node.x > nCanvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > nCanvas.height) node.vy *= -1;
+
+                // Притягивание к мыши
+                const dxMouse = mouseX - node.x;
+                const dyMouse = mouseY - node.y;
+                const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                if (distMouse < 180) {
+                    node.x += dxMouse * 0.015;
+                    node.y += dyMouse * 0.015;
+                }
+
+                nCtx.fillStyle = 'rgba(200, 215, 235, 0.7)';
+                nCtx.beginPath();
+                nCtx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                nCtx.fill();
+
+                // Соединительные линии между близкими узлами
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const other = nodes[j];
+                    const dx = other.x - node.x;
+                    const dy = other.y - node.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 130) {
+                        nCtx.strokeStyle = `rgba(180, 195, 220, ${1 - dist / 130})`;
+                        nCtx.lineWidth = 0.6;
+                        nCtx.beginPath();
+                        nCtx.moveTo(node.x, node.y);
+                        nCtx.lineTo(other.x, other.y);
+                        nCtx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(drawNodes);
+        }
+        drawNodes();
+
         // --- ВИЗУАЛИЗАТОР ЗВУКА И РЕАКЦИЯ ИНТЕРФЕЙСА ---
         const vizContainer = document.getElementById('visualizer');
-        const uiPanel = document.getElementById('main-ui');
         const barCount = 38;
         const bars = [];
         for (let i = 0; i < barCount; i++) {
@@ -543,133 +602,27 @@
             for (let i = 0; i < barCount; i++) {
                 const val = dataArray[i] || 0;
                 sum += val;
-                const h = Math.max(4, (val / 255) * 52);
+                const h = Math.max(4, (val / 255) * 58);
                 bars[i].style.height = h + 'px';
             }
             audioBassImpact = sum / barCount;
 
-            // Вспышка рамки на басы
             const glowStrength = Math.min(35, audioBassImpact / 3);
             uiPanel.style.boxShadow = `0 0 ${80 + glowStrength * 2}px rgba(0, 0, 0, 0.98), 0 0 ${glowStrength}px rgba(240, 245, 255, 0.3)`;
         }
 
-        // --- ДИНАМИЧЕСКИЕ ЧАСТИЦЫ ---
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        let particles = [];
-        for (let i = 0; i < 110; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 2 + 0.5,
-                speedY: Math.random() * 0.6 + 0.1,
-                speedX: Math.random() * 0.4 - 0.2,
-                opacity: Math.random() * 0.6 + 0.1
-            });
-        }
-
-        function drawParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let boost = audioBassImpact ? (audioBassImpact / 255) * 2.5 : 0;
-
-            particles.forEach(p => {
-                ctx.fillStyle = `rgba(200, 210, 225, ${Math.min(1, p.opacity + boost)})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size + boost, 0, Math.PI * 2);
-                ctx.fill();
-
-                p.y += p.speedY + boost * 2;
-                p.x += p.speedX;
-
-                if (p.y > canvas.height) p.y = 0;
-                if (p.x > canvas.width) p.x = 0;
-                if (p.x < 0) p.x = canvas.width;
-            });
-            requestAnimationFrame(drawParticles);
-        }
-        drawParticles();
-
-        // --- ЭФФЕКТ СТЕКАЮЩЕЙ КРОВИ И СМЕЩЕНИЯ ---
-        const bloodCanvas = document.getElementById('blood-canvas');
-        const bCtx = bloodCanvas.getContext('2d');
-        bloodCanvas.width = window.innerWidth;
-        bloodCanvas.height = window.innerHeight;
-
-        let bloodDrips = [];
-
-        function triggerBloodSplatter() {
-            const gunshot = document.getElementById('gunshot');
-            gunshot.currentTime = 0;
-            gunshot.volume = 0.45;
-            gunshot.play().catch(() => {});
-
-            uiPanel.classList.add('shake');
-            setTimeout(() => uiPanel.classList.remove('shake'), 250);
-
-            // Случайная полоса глитча
-            const gBar = document.getElementById('glitch-bar');
-            gBar.style.top = Math.random() * 100 + '%';
-            gBar.style.height = Math.random() * 10 + 2 + 'px';
-            gBar.style.opacity = '1';
-            setTimeout(() => gBar.style.opacity = '0', 120);
-
-            let centerX = Math.random() * (bloodCanvas.width * 0.8) + (bloodCanvas.width * 0.1);
-            let centerY = Math.random() * (bloodCanvas.height * 0.4) + (bloodCanvas.height * 0.1);
-
-            for (let i = 0; i < 6; i++) {
-                let offX = (Math.random() - 0.5) * 45;
-                let offY = (Math.random() - 0.5) * 45;
-                let rad = Math.random() * 26 + 10;
-
-                let grad = bCtx.createRadialGradient(centerX + offX, centerY + offY, 1, centerX + offX, centerY + offY, rad);
-                grad.addColorStop(0, 'rgba(50, 0, 5, 0.98)');
-                grad.addColorStop(1, 'rgba(10, 0, 0, 0)');
-
-                bCtx.fillStyle = grad;
-                bCtx.beginPath();
-                bCtx.arc(centerX + offX, centerY + offY, rad, 0, Math.PI * 2);
-                bCtx.fill();
-            }
-
-            let dripCount = Math.floor(Math.random() * 4) + 2;
-            for (let i = 0; i < dripCount; i++) {
-                bloodDrips.push({
-                    x: centerX + (Math.random() - 0.5) * 45,
-                    y: centerY,
-                    maxLength: Math.random() * 300 + 100,
-                    currentLength: 0,
-                    speed: Math.random() * 2.2 + 0.8,
-                    width: Math.random() * 3.5 + 1.2,
-                    opacity: 0.98
-                });
-            }
-            
-            addTerminalLog("КРИТИЧЕСКИЙ СБОЙ: Потеря целостности системы Paranoiasim.");
-        }
-
-        function drawBloodDrips() {
-            bloodDrips.forEach((d, index) => {
-                if (d.currentLength < d.maxLength) {
-                    d.currentLength += d.speed;
-                    bCtx.fillStyle = `rgba(45, 0, 5, ${d.opacity})`;
-                    bCtx.beginPath();
-                    bCtx.arc(d.x, d.y + d.currentLength, d.width, 0, Math.PI * 2);
-                    bCtx.fill();
-                } else {
-                    d.opacity -= 0.0015;
-                }
-                if (d.opacity <= 0) bloodDrips.splice(index, 1);
-            });
-            requestAnimationFrame(drawBloodDrips);
-        }
-        drawBloodDrips();
-
+        // --- ЭФФЕКТ СКАЧКА НАПРЯЖЕНИЯ / ГЛИТЧА ---
         setInterval(() => {
-            if(Math.random() > 0.4) triggerBloodSplatter();
-        }, 5500);
+            if (Math.random() > 0.5) {
+                const gBar = document.getElementById('glitch-bar');
+                gBar.style.top = Math.random() * 100 + '%';
+                gBar.style.height = Math.random() * 8 + 2 + 'px';
+                gBar.style.opacity = '1';
+                setTimeout(() => gBar.style.opacity = '0', 100);
+
+                addTerminalLog("ОБНОВЛЕНИЕ СЕТИ: Пакет узлов синхронизирован.");
+            }
+        }, 5000);
 
         // --- ЛОГИ ТЕРМИНАЛА ---
         const terminal = document.getElementById('terminal');
