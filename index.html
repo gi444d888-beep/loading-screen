@@ -12,15 +12,15 @@
         }
 
         :root {
-            --bg-color: #060709;
-            --panel-bg: rgba(12, 14, 18, 0.95);
-            --accent-gray: #a1a8b8;
-            --light-gray: #f3f4f6;
-            --dark-gray: #0d1117;
-            --border-gray: #2d333f;
-            --glow-gray: rgba(220, 225, 235, 0.4);
-            --glitch-red: rgba(255, 0, 50, 0.9);
-            --glitch-blue: rgba(0, 210, 255, 0.9);
+            --bg-color: #030406;
+            --panel-bg: rgba(10, 12, 16, 0.96);
+            --accent-gray: #b0b7c6;
+            --light-gray: #f8fafc;
+            --dark-gray: #090c10;
+            --border-gray: #2a303c;
+            --glow-gray: rgba(240, 245, 255, 0.45);
+            --glitch-red: rgba(255, 0, 60, 0.9);
+            --glitch-blue: rgba(0, 225, 255, 0.9);
         }
 
         body {
@@ -32,9 +32,10 @@
             justify-content: center;
             align-items: center;
             color: var(--light-gray);
+            perspective: 1000px;
         }
 
-        /* КНОПКА ЗВУКА В ЛЕВОМ ВЕРХНЕМ УГЛУ (ТАМ GMOD ТОЧНО НЕ ЗАКРЫВАЕТ) */
+        /* КНОПКА ЗВУКА В ВЕРХНЕМ ЛЕВОМ УГЛУ */
         .audio-controls {
             position: fixed !important;
             top: 20px !important;
@@ -43,54 +44,66 @@
             font-weight: bold;
             letter-spacing: 2px;
             color: #fff;
-            background: rgba(5, 6, 8, 0.9);
+            background: rgba(4, 5, 7, 0.92);
             border: 2px solid var(--accent-gray);
-            padding: 12px 20px;
+            padding: 12px 22px;
             border-radius: 2px;
             cursor: pointer;
             z-index: 9999999 !important;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.95), 0 0 10px var(--glow-gray);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.95), 0 0 12px var(--glow-gray);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .audio-controls:hover {
             border-color: #ffffff;
-            background: rgba(25, 28, 35, 0.98);
-            transform: scale(1.08);
-            box-shadow: 0 0 35px rgba(255, 255, 255, 0.4);
+            background: rgba(20, 24, 32, 0.98);
+            transform: scale(1.1) rotate(-1deg);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
         }
 
-        /* Эффект CRT монитора и мерцание */
+        /* Сканирующие линии и мониторная сетка */
         .scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 20, 24, 0) 50%, rgba(0, 0, 0, 0.8) 50%), 
-                        linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.05));
+            background: linear-gradient(rgba(18, 20, 24, 0) 50%, rgba(0, 0, 0, 0.85) 50%), 
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.06));
             background-size: 100% 4px, 6px 100%;
             z-index: 10;
             pointer-events: none;
-            animation: scanlineFlicker 0.08s infinite alternate;
+            animation: scanlineFlicker 0.06s infinite alternate;
         }
 
         @keyframes scanlineFlicker {
-            0% { opacity: 0.88; }
+            0% { opacity: 0.85; }
             100% { opacity: 1; }
         }
 
         .vignette {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.98);
+            box-shadow: inset 0 0 250px rgba(0, 0, 0, 0.98);
             z-index: 9;
             pointer-events: none;
         }
 
-        #canvas, #blood-canvas {
+        /* ПОЛОСЫ РАЗРЫВА КАДРА (GLITCH STRIPS) */
+        .glitch-bar {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: 11;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #matrix-canvas, #canvas, #blood-canvas {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
         }
 
-        #canvas { z-index: 1; }
+        #matrix-canvas { z-index: 1; opacity: 0.25; }
+        #canvas { z-index: 2; }
         #blood-canvas { z-index: 7; pointer-events: none; }
 
         /* Главный интерфейс */
@@ -98,47 +111,43 @@
             position: relative;
             z-index: 8;
             width: 90%;
-            max-width: 1020px;
+            max-width: 1040px;
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
             border: 1px solid var(--border-gray);
             padding: 45px;
-            box-shadow: 0 0 100px rgba(0, 0, 0, 0.98), inset 0 0 40px rgba(255, 255, 255, 0.02);
+            box-shadow: 0 0 120px rgba(0, 0, 0, 0.98), inset 0 0 50px rgba(255, 255, 255, 0.02);
             border-radius: 3px;
-            animation: interfaceEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform-style: preserve-3d;
+            animation: interfaceEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes interfaceEntrance {
-            0% { opacity: 0; transform: scale(0.88) translateY(40px); filter: blur(15px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+            0% { opacity: 0; transform: scale(0.85) translateY(50px) rotateX(15deg); filter: blur(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0); }
         }
 
-        /* Анимированные углы интерфейса */
+        /* Анимированные неоновые углы */
         .interface::before, .interface::after {
             content: '';
             position: absolute;
-            width: 25px;
-            height: 25px;
+            width: 30px;
+            height: 30px;
             border: 2px solid var(--accent-gray);
-            animation: borderPulse 1.8s infinite alternate ease-in-out;
+            transition: all 0.1s ease;
         }
-        .interface::before { top: -3px; left: -3px; border-right: 0; border-bottom: 0; }
-        .interface::after { bottom: -3px; right: -3px; border-left: 0; border-top: 0; }
-
-        @keyframes borderPulse {
-            0% { border-color: var(--border-gray); box-shadow: 0 0 0px transparent; }
-            100% { border-color: #ffffff; box-shadow: 0 0 20px var(--glow-gray); }
-        }
+        .interface::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
+        .interface::after { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
 
         .shake {
             animation: screenShake 0.25s cubic-bezier(.36,.07,.19,.97) both;
         }
 
         @keyframes screenShake {
-            10%, 90% { transform: translate3d(-5px, 3px, 0); }
-            20%, 80% { transform: translate3d(7px, -5px, 0); }
-            30%, 50%, 70% { transform: translate3d(-8px, 6px, 0); }
-            40%, 60% { transform: translate3d(8px, -6px, 0); }
+            10%, 90% { transform: translate3d(-6px, 4px, 0) rotate(-0.5deg); }
+            20%, 80% { transform: translate3d(8px, -6px, 0) rotate(0.5deg); }
+            30%, 50%, 70% { transform: translate3d(-10px, 7px, 0) rotate(-1deg); }
+            40%, 60% { transform: translate3d(10px, -7px, 0) rotate(1deg); }
         }
 
         .header {
@@ -157,8 +166,8 @@
         }
 
         .avatar {
-            width: 52px;
-            height: 52px;
+            width: 54px;
+            height: 54px;
             border-radius: 3px;
             border: 1px solid var(--accent-gray);
             background: var(--dark-gray);
@@ -168,8 +177,8 @@
 
         .avatar:hover {
             filter: grayscale(0%);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px var(--glow-gray);
+            transform: scale(1.08) rotate(2deg);
+            box-shadow: 0 0 20px var(--glow-gray);
         }
 
         .user-text {
@@ -204,17 +213,22 @@
             position: relative;
         }
 
-        /* 💥 СВЕРХКРУТОЙ 3D ГЛИТЧ ЗАГОЛОВОК PARANOIASIM 💥 */
+        /* ⚡ 3D RGB GLITCH TITLE PARANOIASIM ⚡ */
         .glitch-title {
-            font-size: 68px;
+            font-size: 74px;
             font-weight: 900;
-            letter-spacing: 16px;
+            letter-spacing: 18px;
             text-transform: uppercase;
             color: #ffffff;
             position: relative;
             display: inline-block;
-            text-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
-            animation: glitchMain 4s infinite;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            animation: titleFloat 4s infinite ease-in-out alternate;
+        }
+
+        @keyframes titleFloat {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-4px) rotate(0.5deg); }
         }
 
         .glitch-title::before, .glitch-title::after {
@@ -228,43 +242,43 @@
         }
 
         .glitch-title::before {
-            left: -3px;
-            text-shadow: 3px 0 var(--glitch-red);
-            animation: glitchAnim1 0.8s infinite linear alternate-reverse;
+            left: -4px;
+            text-shadow: 4px 0 var(--glitch-red);
+            animation: glitchAnim1 0.7s infinite linear alternate-reverse;
         }
 
         .glitch-title::after {
-            left: 3px;
-            text-shadow: -3px 0 var(--glitch-blue);
-            animation: glitchAnim2 1.1s infinite linear alternate-reverse;
+            left: 4px;
+            text-shadow: -4px 0 var(--glitch-blue);
+            animation: glitchAnim2 0.9s infinite linear alternate-reverse;
         }
 
         @keyframes glitchAnim1 {
-            0% { clip: rect(15px, 9999px, 35px, 0); transform: skew(0.3deg); }
-            20% { clip: rect(55px, 9999px, 75px, 0); transform: skew(-0.5deg); }
-            40% { clip: rect(5px, 9999px, 25px, 0); transform: skew(0.8deg); }
-            60% { clip: rect(45px, 9999px, 65px, 0); transform: skew(-0.2deg); }
-            80% { clip: rect(25px, 9999px, 45px, 0); transform: skew(0.4deg); }
-            100% { clip: rect(0px, 9999px, 15px, 0); transform: skew(-0.6deg); }
+            0% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0.6deg); }
+            20% { clip: rect(50px, 9999px, 70px, 0); transform: skew(-0.8deg); }
+            40% { clip: rect(0px, 9999px, 20px, 0); transform: skew(1deg); }
+            60% { clip: rect(40px, 9999px, 60px, 0); transform: skew(-0.4deg); }
+            80% { clip: rect(20px, 9999px, 40px, 0); transform: skew(0.7deg); }
+            100% { clip: rect(30px, 9999px, 50px, 0); transform: skew(-0.9deg); }
         }
 
         @keyframes glitchAnim2 {
-            0% { clip: rect(45px, 9999px, 65px, 0); transform: skew(-0.4deg); }
-            20% { clip: rect(15px, 9999px, 35px, 0); transform: skew(0.6deg); }
-            40% { clip: rect(65px, 9999px, 85px, 0); transform: skew(-0.2deg); }
-            60% { clip: rect(25px, 9999px, 45px, 0); transform: skew(0.5deg); }
-            80% { clip: rect(35px, 9999px, 55px, 0); transform: skew(-0.7deg); }
-            100% { clip: rect(20px, 9999px, 40px, 0); transform: skew(0.3deg); }
+            0% { clip: rect(40px, 9999px, 60px, 0); transform: skew(-0.5deg); }
+            20% { clip: rect(10px, 9999px, 30px, 0); transform: skew(0.8deg); }
+            40% { clip: rect(60px, 9999px, 80px, 0); transform: skew(-0.3deg); }
+            60% { clip: rect(20px, 9999px, 40px, 0); transform: skew(0.6deg); }
+            80% { clip: rect(30px, 9999px, 50px, 0); transform: skew(-0.8deg); }
+            100% { clip: rect(15px, 9999px, 35px, 0); transform: skew(0.4deg); }
         }
 
         .subtitle {
             font-size: 11px;
-            letter-spacing: 10px;
+            letter-spacing: 12px;
             color: var(--accent-gray);
             text-transform: uppercase;
             margin-top: 8px;
-            opacity: 0.85;
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+            opacity: 0.9;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
         /* Визуализатор звука */
@@ -272,22 +286,22 @@
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            gap: 6px;
-            height: 50px;
+            gap: 5px;
+            height: 55px;
             margin-bottom: 25px;
         }
 
         .bar {
             width: 6px;
-            background: linear-gradient(180deg, #ffffff, var(--accent-gray), #1a1e24);
-            box-shadow: 0 0 12px var(--glow-gray);
+            background: linear-gradient(180deg, #ffffff, var(--accent-gray), #11141a);
+            box-shadow: 0 0 15px var(--glow-gray);
             border-radius: 1px;
             transition: height 0.03s cubic-bezier(0, 0, 0.2, 1);
         }
 
         /* Терминал логов */
         .terminal {
-            background: rgba(6, 7, 9, 0.95);
+            background: rgba(5, 6, 8, 0.96);
             border: 1px solid rgba(255, 255, 255, 0.08);
             padding: 14px 18px;
             height: 90px;
@@ -299,22 +313,22 @@
             flex-direction: column;
             justify-content: flex-end;
             border-radius: 2px;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.95);
         }
 
         .terminal-line {
             margin-top: 4px;
             white-space: nowrap;
-            animation: lineFade 0.2s ease-out forwards;
+            animation: lineType 0.25s ease-out forwards;
         }
 
-        @keyframes lineFade {
-            from { opacity: 0; transform: translateX(-8px); }
-            to { opacity: 1; transform: translateX(0); }
+        @keyframes lineType {
+            from { opacity: 0; transform: translateX(-12px); filter: blur(4px); }
+            to { opacity: 1; transform: translateX(0); filter: blur(0); }
         }
 
         .terminal-line::before {
-            content: "[LOG] > ";
+            content: "[WIRED] > ";
             color: #ffffff;
             font-weight: bold;
         }
@@ -335,7 +349,7 @@
 
         .progress-box {
             width: 100%;
-            background: #08090c;
+            background: #06070a;
             border: 1px solid var(--border-gray);
             padding: 4px;
             border-radius: 2px;
@@ -345,18 +359,18 @@
         .progress-bar {
             height: 12px;
             width: 0%;
-            background: linear-gradient(90deg, #2d333f, #9ca3af, #ffffff);
+            background: linear-gradient(90deg, #1f242d, #9ca3af, #ffffff);
             transition: width 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
-            box-shadow: 0 0 20px var(--glow-gray);
+            box-shadow: 0 0 25px var(--glow-gray);
             position: relative;
         }
 
         .progress-bar::after {
             content: '';
             position: absolute;
-            top: 0; right: 0; bottom: 0; width: 8px;
+            top: 0; right: 0; bottom: 0; width: 10px;
             background: #fff;
-            box-shadow: 0 0 12px #fff;
+            box-shadow: 0 0 15px #fff;
         }
 
         .track-info {
@@ -377,13 +391,15 @@
     <audio id="bg-music" src="music.mp3" loop preload="auto"></audio>
     <audio id="gunshot" src="shot.mp3" preload="auto"></audio>
 
-    <!-- КНОПКА МУТА В ВЕРХНЕМ ЛЕВОМ УГЛУ -->
     <button class="audio-controls" id="mute-btn" onclick="toggleMusic(event)">
         🔊 [ МУЗЫКА: ВКЛ ]
     </button>
 
     <div class="scanlines"></div>
     <div class="vignette"></div>
+    <div class="glitch-bar" id="glitch-bar"></div>
+
+    <canvas id="matrix-canvas"></canvas>
     <canvas id="canvas"></canvas>
     <canvas id="blood-canvas"></canvas>
 
@@ -398,7 +414,7 @@
             </div>
             <div class="system-stats">
                 СИСТЕМА: <span>PARANOIASIM / WIRED</span><br>
-                ПИНГ: <span id="ping">18 ms</span> | FPS: <span id="fps">60</span>
+                ПИНГ: <span id="ping">16 ms</span> | FPS: <span id="fps">60</span>
             </div>
         </div>
 
@@ -410,8 +426,8 @@
         <div class="visualizer" id="visualizer"></div>
 
         <div class="terminal" id="terminal">
-            <div class="terminal-line">Инициализация Paranoiasim Engine...</div>
-            <div class="terminal-line">Подключение к прослойке WIRED прошло успешно.</div>
+            <div class="terminal-line">Инициализация Paranoiasim Engine v2.0...</div>
+            <div class="terminal-line">Подключение к сети WIRED прошло успешно.</div>
         </div>
 
         <div class="progress-container">
@@ -473,9 +489,40 @@
             }
         }
 
-        // --- ВИЗУАЛИЗАТОР ЗВУКА ---
+        // --- НОВОЕ: ЦИФРОВОЙ ДОЖДЬ (MATRIX / WIRED RAIN) ---
+        const mCanvas = document.getElementById('matrix-canvas');
+        const mCtx = mCanvas.getContext('2d');
+        mCanvas.width = window.innerWidth;
+        mCanvas.height = window.innerHeight;
+
+        const chars = '01XYZPARANOIASIMWIRED456789';
+        const fontSize = 12;
+        const columns = Math.floor(mCanvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            mCtx.fillStyle = 'rgba(3, 4, 6, 0.15)';
+            mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+            mCtx.fillStyle = '#a1a8b8';
+            mCtx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > mCanvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        // --- ВИЗУАЛИЗАТОР ЗВУКА И РЕАКЦИЯ ИНТЕРФЕЙСА ---
         const vizContainer = document.getElementById('visualizer');
-        const barCount = 36;
+        const uiPanel = document.getElementById('main-ui');
+        const barCount = 38;
         const bars = [];
         for (let i = 0; i < barCount; i++) {
             const bar = document.createElement('div');
@@ -496,20 +543,24 @@
             for (let i = 0; i < barCount; i++) {
                 const val = dataArray[i] || 0;
                 sum += val;
-                const h = Math.max(4, (val / 255) * 50);
+                const h = Math.max(4, (val / 255) * 52);
                 bars[i].style.height = h + 'px';
             }
-            audioBassImpact = sum / barCount; // Использование для эффекта реактивных частиц
+            audioBassImpact = sum / barCount;
+
+            // Вспышка рамки на басы
+            const glowStrength = Math.min(35, audioBassImpact / 3);
+            uiPanel.style.boxShadow = `0 0 ${80 + glowStrength * 2}px rgba(0, 0, 0, 0.98), 0 0 ${glowStrength}px rgba(240, 245, 255, 0.3)`;
         }
 
-        // --- ДИНАМИЧЕСКИЕ ЧАСТИЦЫ, РЕАГИРУЮЩИЕ НА БАС ---
+        // --- ДИНАМИЧЕСКИЕ ЧАСТИЦЫ ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
         let particles = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 110; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
@@ -522,10 +573,10 @@
 
         function drawParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let boost = audioBassImpact ? (audioBassImpact / 255) * 2 : 0;
+            let boost = audioBassImpact ? (audioBassImpact / 255) * 2.5 : 0;
 
             particles.forEach(p => {
-                ctx.fillStyle = `rgba(190, 200, 215, ${Math.min(1, p.opacity + boost)})`;
+                ctx.fillStyle = `rgba(200, 210, 225, ${Math.min(1, p.opacity + boost)})`;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size + boost, 0, Math.PI * 2);
                 ctx.fill();
@@ -541,7 +592,7 @@
         }
         drawParticles();
 
-        // --- ЭФФЕКТ СТЕКАЮЩЕЙ КРОВИ ---
+        // --- ЭФФЕКТ СТЕКАЮЩЕЙ КРОВИ И СМЕЩЕНИЯ ---
         const bloodCanvas = document.getElementById('blood-canvas');
         const bCtx = bloodCanvas.getContext('2d');
         bloodCanvas.width = window.innerWidth;
@@ -555,20 +606,26 @@
             gunshot.volume = 0.45;
             gunshot.play().catch(() => {});
 
-            const ui = document.getElementById('main-ui');
-            ui.classList.add('shake');
-            setTimeout(() => ui.classList.remove('shake'), 250);
+            uiPanel.classList.add('shake');
+            setTimeout(() => uiPanel.classList.remove('shake'), 250);
+
+            // Случайная полоса глитча
+            const gBar = document.getElementById('glitch-bar');
+            gBar.style.top = Math.random() * 100 + '%';
+            gBar.style.height = Math.random() * 10 + 2 + 'px';
+            gBar.style.opacity = '1';
+            setTimeout(() => gBar.style.opacity = '0', 120);
 
             let centerX = Math.random() * (bloodCanvas.width * 0.8) + (bloodCanvas.width * 0.1);
             let centerY = Math.random() * (bloodCanvas.height * 0.4) + (bloodCanvas.height * 0.1);
 
             for (let i = 0; i < 6; i++) {
-                let offX = (Math.random() - 0.5) * 40;
-                let offY = (Math.random() - 0.5) * 40;
-                let rad = Math.random() * 25 + 10;
+                let offX = (Math.random() - 0.5) * 45;
+                let offY = (Math.random() - 0.5) * 45;
+                let rad = Math.random() * 26 + 10;
 
                 let grad = bCtx.createRadialGradient(centerX + offX, centerY + offY, 1, centerX + offX, centerY + offY, rad);
-                grad.addColorStop(0, 'rgba(45, 0, 5, 0.98)');
+                grad.addColorStop(0, 'rgba(50, 0, 5, 0.98)');
                 grad.addColorStop(1, 'rgba(10, 0, 0, 0)');
 
                 bCtx.fillStyle = grad;
@@ -580,24 +637,24 @@
             let dripCount = Math.floor(Math.random() * 4) + 2;
             for (let i = 0; i < dripCount; i++) {
                 bloodDrips.push({
-                    x: centerX + (Math.random() - 0.5) * 40,
+                    x: centerX + (Math.random() - 0.5) * 45,
                     y: centerY,
-                    maxLength: Math.random() * 280 + 100,
+                    maxLength: Math.random() * 300 + 100,
                     currentLength: 0,
-                    speed: Math.random() * 2.0 + 0.7,
+                    speed: Math.random() * 2.2 + 0.8,
                     width: Math.random() * 3.5 + 1.2,
                     opacity: 0.98
                 });
             }
             
-            addTerminalLog("ОШИБКА ЯДРА: Аномальный сбой сегментации Paranoiasim.");
+            addTerminalLog("КРИТИЧЕСКИЙ СБОЙ: Потеря целостности системы Paranoiasim.");
         }
 
         function drawBloodDrips() {
             bloodDrips.forEach((d, index) => {
                 if (d.currentLength < d.maxLength) {
                     d.currentLength += d.speed;
-                    bCtx.fillStyle = `rgba(40, 0, 5, ${d.opacity})`;
+                    bCtx.fillStyle = `rgba(45, 0, 5, ${d.opacity})`;
                     bCtx.beginPath();
                     bCtx.arc(d.x, d.y + d.currentLength, d.width, 0, Math.PI * 2);
                     bCtx.fill();
@@ -612,7 +669,7 @@
 
         setInterval(() => {
             if(Math.random() > 0.4) triggerBloodSplatter();
-        }, 6000);
+        }, 5500);
 
         // --- ЛОГИ ТЕРМИНАЛА ---
         const terminal = document.getElementById('terminal');
